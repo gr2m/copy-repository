@@ -9,5 +9,6 @@
   "dependencies": {
     "dotenv": "^9.0.2",
     "octokit": "^1.0.5"
-  }
+  },
+  "repository": "github:gr2m/copy-repository"
 }
