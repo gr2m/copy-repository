@@ -2,7 +2,7 @@
   "name": "copy-repository",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "type": "module",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -10,6 +10,7 @@
   "author": "Gregor Martynus (https://twitter.com/gr2m)",
   "license": "MIT",
   "dependencies": {
+    "dotenv": "^9.0.2",
     "octokit": "^1.0.5"
   }
 }
