@@ -2,6 +2,7 @@
   "name": "copy-repository",
   "version": "1.0.0",
   "description": "CLI to copy a repository with meta data such as issues, labels, etc",
+  "bin": "cli.js",
   "type": "module",
   "keywords": [],
   "author": "Gregor Martynus (https://twitter.com/gr2m)",
