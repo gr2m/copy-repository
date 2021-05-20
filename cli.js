@@ -1,13 +1,23 @@
+#!/usr/bin/env node
+
 import { readFile } from "fs/promises";
 import { Octokit } from "octokit";
 import dotenv from "dotenv";
 
 dotenv.config();
 
+const requiredEnvVariables = ["GITHUB_TOKENS", "SOURCE_REPO"];
+for (const envVariable of requiredEnvVariables) {
+  if (!process.env[envVariable]) {
+    throw new Error(`${envVariable} is not set`);
+  }
+}
+
 // configuration
-const owner = "Another-Practice-Organization";
-const templateRepo = "template-issues-source";
-const newRepoName = "test-" + Date.now();
+const [sourceOwner, sourceRepo] = process.env.SOURCE_REPO.split("/");
+const [targetOwner, targetRepo] = process.env.TARGET_REPO
+  ? process.env.TARGET_REPO.split("/")
+  : [sourceOwner, "test-" + Date.now()];
 
 // init octokit
 const tokens = process.env.GITHUB_TOKENS.split(" ");
@@ -18,6 +28,9 @@ const octokit = new Octokit({
 // load users
 const authors = {};
 for (const token of tokens) {
+  console.log(`token`);
+  console.log(token);
+
   const authorOctokit = new Octokit({
     auth: token,
   });
@@ -29,8 +42,8 @@ for (const token of tokens) {
 // retrieve all data
 const QUERY = await readFile("retrieve-data.graphql", "utf-8");
 const result = await octokit.graphql(QUERY, {
-  owner,
-  repo: templateRepo,
+  owner: sourceOwner,
+  repo: sourceRepo,
 });
 
 const collaborators = result.repository.collaborators.edges.map((edge) => {
@@ -52,16 +65,16 @@ const issues = result.repository.issues.nodes.map((issue) => {
 
 // create a new repository based on a template
 const { data: repository } = await octokit.rest.repos.createUsingTemplate({
-  template_owner: owner,
-  template_repo: templateRepo,
-  owner,
-  name: newRepoName,
+  template_owner: sourceOwner,
+  template_repo: sourceRepo,
+  owner: targetOwner,
+  name: targetRepo,
 });
 console.log("Repository created at %s", repository.html_url);
 
 for (const collaborator of collaborators) {
   const { data } = await octokit.rest.repos.addCollaborator({
-    owner,
+    owner: targetOwner,
     repo: repository.name,
     username: collaborator.login,
     permission: collaborator.permission,
@@ -86,7 +99,7 @@ for (const collaborator of collaborators) {
 }
 for (const milestone of milestones) {
   const { data } = await octokit.rest.issues.createMilestone({
-    owner,
+    owner: targetOwner,
     repo: repository.name,
     title: milestone.title,
     due_on: milestone.dueOn ? milestone.dueOn : undefined,
@@ -96,7 +109,7 @@ for (const milestone of milestones) {
 
   if (milestone.closed) {
     await octokit.rest.issues.updateMilestone({
-      owner,
+      owner: targetOwner,
       repo: repository.name,
       milestone_number: data.number,
       state: "closed",
@@ -107,7 +120,7 @@ for (const milestone of milestones) {
 for (const label of labels) {
   try {
     await octokit.rest.issues.createLabel({
-      owner,
+      owner: targetOwner,
       repo: repository.name,
       ...label,
     });
@@ -141,7 +154,7 @@ for (const issue of issues) {
   const issueLabels = issue.labels.map((label) => label.name);
   const issueMilestone = issue.milestone ? issue.milestone.number : undefined;
   const { data: newIssue } = await authorOctokit.rest.issues.create({
-    owner,
+    owner: targetOwner,
     repo: repository.name,
     title: issue.title,
     body: issue.body,
@@ -169,7 +182,7 @@ for (const issue of issues) {
     }
 
     const { data: newComment } = await authorOctokit.rest.issues.createComment({
-      owner,
+      owner: targetOwner,
       repo: repository.name,
       issue_number: newIssue.number,
       body: comment.body,
