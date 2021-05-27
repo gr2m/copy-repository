@@ -10,7 +10,13 @@ You need an access token for every issue and comment author in order for the iss
 
 `TARGET_REPO` is optional and defaults to the owner from `SOURCE_REPO` and a random name prefixed by `test-`.
 
-ProTip: to delete a bunch of test repositories at once, we recommend [`npx @octoherd/script-delete-repository`](https://github.com/octoherd/script-delete-repository#readme).
+**ProTip**: to delete a bunch of test repositories at once, we recommend [`npx @octoherd/script-delete-repository`](https://github.com/octoherd/script-delete-repository#readme).
+
+```
+# create token at https://github.com/settings/tokens/new?scopes=delete_repo
+npx @octoherd/script-delete-repository \
+  -T ghp_0123456789abcdefghjklmnopqrstuvwxyzA \
+```
 
 See [gr2m/helpdesk#16](https://github.com/gr2m/helpdesk/issues/16) for more information about this repository and its motivation.
 
