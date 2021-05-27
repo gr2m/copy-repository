@@ -1,6 +1,9 @@
 #!/usr/bin/env node
 
+import { dirname, join } from "path";
+import { fileURLToPath } from "url";
 import { readFile } from "fs/promises";
+
 import { Octokit } from "octokit";
 import dotenv from "dotenv";
 
@@ -17,7 +20,7 @@ for (const envVariable of requiredEnvVariables) {
 const [sourceOwner, sourceRepo] = process.env.SOURCE_REPO.split("/");
 const [targetOwner, targetRepo] = process.env.TARGET_REPO
   ? process.env.TARGET_REPO.split("/")
-  : [sourceOwner, "test-" + Date.now()];
+  : [sourceOwner, sourceRepo + "-copy-" + Date.now()];
 
 // init octokit
 const tokens = process.env.GITHUB_TOKENS.split(" ");
@@ -28,9 +31,6 @@ const octokit = new Octokit({
 // load users
 const authors = {};
 for (const token of tokens) {
-  console.log(`token`);
-  console.log(token);
-
   const authorOctokit = new Octokit({
     auth: token,
   });
@@ -40,7 +40,10 @@ for (const token of tokens) {
 }
 
 // retrieve all data
-const QUERY = await readFile("retrieve-data.graphql", "utf-8");
+const QUERY = await readFile(
+  join(dirname(fileURLToPath(import.meta.url)), "retrieve-data.graphql"),
+  "utf-8"
+);
 const result = await octokit.graphql(QUERY, {
   owner: sourceOwner,
   repo: sourceRepo,
